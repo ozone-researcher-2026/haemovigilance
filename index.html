@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Haemovigilance">
+<meta name="theme-color" content="#2b0404">
 <title>Sistem Haemovigilance Nasional</title>
 <style>
 /* ==== EMBEDDED FONTS (base64) ==== */
@@ -462,6 +469,19 @@
     .btn-ghost:hover,.icon-btn:hover,.menu-card:hover,.menu-card.utd:hover,.menu-card.rs:hover,.menu-card.neutral:hover,.add-btn:hover,.rm-btn:hover,.del-btn:hover{transform:none;box-shadow:none}
     .option:hover{border-color:var(--border);background:var(--bg-in)}
   }
+
+  /* ============ BACKUP UI (added) ============ */
+  .hv-backup{margin-top:20px;padding:14px 16px;background:#fff;border:1.5px dashed #cbd5e1;border-radius:14px}
+  .hv-bk-note{font-size:12.5px;color:#475569;line-height:1.65;margin:4px 0 12px}
+  .hv-bk-btns{display:flex;flex-wrap:wrap;gap:8px}
+  .hv-bk-btn{font-size:16px;padding:10px 14px}
+  #hvCopyWrap{margin-top:10px}
+  #hvCopyBox{width:100%;min-height:130px;font-size:12px;font-family:ui-monospace,Menlo,monospace;
+    background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px;color:#334155}
+  .hv-bk-hint{font-size:11.5px;color:#94a3b8;margin-top:6px;line-height:1.6}
+  .det-toggle{margin-top:10px;font-size:12.5px;font-weight:700;color:var(--primary);cursor:pointer;
+    user-select:none;-webkit-user-select:none}
+  .body.full{margin-top:8px;border-top:1.5px dashed #e2e8f0;padding-top:8px}
 </style>
 </head>
 <body>
@@ -864,6 +884,21 @@
         <button data-tab="rsFinal">RS Final</button>
       </div>
       <div id="dataContent"></div>
+      <div class="hv-backup">
+        <div class="sub-label">Backup & Pindah Perangkat</div>
+        <p class="hv-bk-note">Data tersimpan di penyimpanan perangkat ini. Untuk memindahkan ke perangkat lain: <b>Unduh Backup</b> di perangkat lama, kirim berkasnya (WA/email), lalu <b>Pulihkan Backup</b> di perangkat baru.</p>
+        <div class="hv-bk-btns">
+          <button type="button" class="btn btn-ghost hv-bk-btn" id="hvBtnExport">⬇️ Unduh Backup</button>
+          <button type="button" class="btn btn-ghost hv-bk-btn" id="hvBtnImport">⬆️ Pulihkan Backup</button>
+          <button type="button" class="btn btn-ghost hv-bk-btn" id="hvBtnCopy">📋 Salin Teks</button>
+          <button type="button" class="btn btn-ghost hv-bk-btn" id="hvBtnShow">👁️ Lihat Teks</button>
+        </div>
+        <input type="file" id="hvImportFile" accept=".json,application/json" style="position:fixed;top:-200px;left:-200px;width:1px;height:1px;opacity:0">
+        <div id="hvCopyWrap" hidden>
+          <textarea id="hvCopyBox" readonly></textarea>
+          <p class="hv-bk-hint">Salin seluruh teks di atas lalu simpan di Catatan/Notes. Untuk memindahkan: tempel teks itu di perangkat lain via Lihat Teks, atau pulihkan dari berkas.</p>
+        </div>
+      </div>
     </section>
 
   </main>
@@ -1640,6 +1675,8 @@ function renderData(tab){
         <div><b>Email:</b> ${esc(d.email||'-')} | <b>HP/WA:</b> ${esc(d.hp||'-')}</div>
         <div><b>Dokumen:</b> ${esc(d.dokumen||'-')}</div>
       </div>
+      <div class="det-toggle" data-tgl="${tab}-0">▸ Lihat detail lengkap</div>
+      <div class="body full" data-full="${tab}-0" hidden>${hvFullHtml(tab, d)}</div>
     </div>`;
     box.querySelectorAll('[data-delreg]').forEach(btn=>{
       btn.addEventListener('click',()=>{
@@ -1681,6 +1718,8 @@ function renderData(tab){
           <div><b>Kejadian Lain:</b> ${esc(d.kejadianLain||'-')}</div>
           <div><b>Catatan:</b> ${esc(d.catatanLain||'-')}</div>
         </div>
+        <div class="det-toggle" data-tgl="${tab}-${i}">▸ Lihat detail lengkap</div>
+        <div class="body full" data-full="${tab}-${i}" hidden>${hvFullHtml(tab, d)}</div>
       </div>`).join('');
   } else if(tab==='utdFinal'){
     html = items.map((d,i)=>`
@@ -1695,6 +1734,8 @@ function renderData(tab){
           <div><b>Hasil Investigasi:</b> ${esc(d.hasilInvestigasi||'-')}</div>
           <div><b>Tindakan:</b> ${esc(d.tindakanPerbaikan||'-')}</div>
         </div>
+        <div class="det-toggle" data-tgl="${tab}-${i}">▸ Lihat detail lengkap</div>
+        <div class="body full" data-full="${tab}-${i}" hidden>${hvFullHtml(tab, d)}</div>
       </div>`).join('');
   } else if(tab==='rsAwal'){
     html = items.map((d,i)=>`
@@ -1713,6 +1754,8 @@ function renderData(tab){
           </div>
           <div><b>Imputability Awal:</b> ${esc(labelSkala(d.imputabilitas))}</div>
         </div>
+        <div class="det-toggle" data-tgl="${tab}-${i}">▸ Lihat detail lengkap</div>
+        <div class="body full" data-full="${tab}-${i}" hidden>${hvFullHtml(tab, d)}</div>
       </div>`).join('');
   } else if(tab==='rsFinal'){
     html = items.map((d,i)=>`
@@ -1732,6 +1775,8 @@ function renderData(tab){
           <div><b>Tindakan:</b> ${esc(d.tindakanPerbaikan||'-')}</div>
           <div><b>Pelapor:</b> ${esc(d.namaPelapor||'-')}</div>
         </div>
+        <div class="det-toggle" data-tgl="${tab}-${i}">▸ Lihat detail lengkap</div>
+        <div class="body full" data-full="${tab}-${i}" hidden>${hvFullHtml(tab, d)}</div>
       </div>`).join('');
   }
   box.innerHTML = html;
@@ -1747,7 +1792,184 @@ function renderData(tab){
       renderData(tab);
     });
   });
+
 }
+
+
+/* =========================================================
+   BACKUP: DETAIL, EXPORT, IMPORT, COPY (added)
+========================================================= */
+function labelSkalaSafe(v){
+  try{ const s = labelSkala(v); return (s===undefined||s===null||s==='')?String(v==null?'-':v):s; }
+  catch(e){ return String(v==null?'-':v); }
+}
+function hvDetailRows(tab, d){
+  const rows = [];
+  const add = function(k, v){ rows.push([k, (v===''||v==null)?'-':v]); };
+  if(tab==='pendUTD'||tab==='pendRS'){
+    add('Kode Registrasi', d.kode); add('Nama PIC', d.namaPic); add('Jabatan', d.jabatan);
+    add('Institusi', d.institusi); add('Kab/Kota', d.kabupaten); add('Provinsi', d.provinsi);
+    add('Email', d.email); add('HP/WA', d.hp); add('Dokumen', d.dokumen);
+  } else if(tab==='utdAwal'){
+    add('Nomor ID', d.nomorID); add('Nomor Pelaporan', d.nomorPelaporan); add('Tanggal Entri', d.tanggalEntri);
+    add('Nama Penemu', d.namaPenemu);
+    add('Jenis Donor', (d.jenisDonor||[]).join(', '));
+    add('Efek Samping', (d.efekSamping||[]).map(function(x){return x.jenis+' ('+labelSkalaSafe(x.keparahan)+(x.other?'; '+x.other:'')+')';}).join('; '));
+    add('Catatan Keparahan', d.catatanKeparahan);
+    add('Penyimpangan', (d.penyimpangan||[]).map(function(x){return x.tahap+' -> '+(x.penyebab||'-')+(x.other?'; '+x.other:'');}).join('; '));
+    add('Kejadian Lain', d.kejadianLain); add('Catatan Lain', d.catatanLain);
+  } else if(tab==='utdFinal'){
+    add('Ref. Notif. Awal', d.refNomorAwal); add('Tgl Notifikasi Final', d.tanggalNotifikasi);
+    add('Nama Pelapor', d.namaPelapor); add('Hasil Investigasi', d.hasilInvestigasi);
+    add('Tindakan Perbaikan', d.tindakanPerbaikan);
+  } else if(tab==='rsAwal'){
+    add('Nomor Pelaporan', d.nomorPelaporan); add('Nama Penemu', d.namaPenemu);
+    add('Jenis Kelamin', d.jenisKelamin); add('Tgl Lahir Pasien', d.tglLahir);
+    add('Tgl Transfusi', d.tglTransfusi); add('Tgl Reaksi', d.tglReaksi);
+    add('Komponen', (d.komponen||'-')+(d.komponenLainnya?'; '+d.komponenLainnya:''));
+    add('Reaksi', (d.reaksi||[]).map(function(x){return x.jenis+' ('+labelSkalaSafe(x.keparahan)+(x.other?'; '+x.other:'')+')';}).join('; '));
+    add('Imputability', labelSkalaSafe(d.imputabilitas));
+  } else if(tab==='rsFinal'){
+    add('Ref. Notif. Awal', d.refNomorAwal); add('Tgl Notifikasi Final', d.tanggalNotifikasi);
+    add('Perubahan Jenis', d.perubahanJenis);
+    add('Reaksi Akhir', (d.reaksiAkhir||[]).map(function(x){return x.jenis+' ('+labelSkalaSafe(x.keparahan)+(x.other?'; '+x.other:'')+')';}).join('; '));
+    add('Perubahan Imputability', d.perubahanImp);
+    add('Imputability Awal', labelSkalaSafe(d.impAwal));
+    add('Imputability Akhir', labelSkalaSafe(d.impAkhir));
+    add('Outcome', d.outcome); add('Detail Outcome', d.outcomeDetail);
+    add('Tindakan Perbaikan', d.tindakanPerbaikan); add('Nama Pelapor', d.namaPelapor);
+  }
+  add('Tersimpan', d.dibuat ? new Date(d.dibuat).toLocaleString('id-ID') : '-');
+  return rows;
+}
+function hvFullHtml(tab, d){
+  return hvDetailRows(tab, d).map(function(r){return '<div><b>'+esc(r[0])+':</b> '+esc(r[1])+'</div>';}).join('');
+}
+function hvBackupObj(){
+  try{ return JSON.parse(lsGet(KEY)||'{}')||{}; }catch(e){ return {}; }
+}
+function hvPad2(n){ return String(n).padStart(2,'0'); }
+function hvExportFile(){
+  try{
+    const obj = hvBackupObj();
+    obj.__hvBackup = {app:'haemovigilance', versi:2, diekspor:new Date().toISOString()};
+    const blob = new Blob([JSON.stringify(obj, null, 1)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const d = new Date();
+    a.download = 'backup-haemovigilance-'+d.getFullYear()+hvPad2(d.getMonth()+1)+hvPad2(d.getDate())+'-'+hvPad2(d.getHours())+hvPad2(d.getMinutes())+'.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 900);
+    showToast('Berkas backup diunduh.');
+  }catch(e){ showToast('Gagal membuat berkas: '+e.message, true); }
+}
+function hvMergeImport(incoming){
+  const cur = hvBackupObj();
+  const keys = ['pendUTD','pendRS','utdAwal','utdFinal','rsAwal','rsFinal'];
+  let nCase = 0, nReg = 0;
+  keys.forEach(function(k){
+    if(Array.isArray(incoming[k])){
+      cur[k] = Array.isArray(cur[k]) ? cur[k] : [];
+      incoming[k].forEach(function(s){
+        const idS = s.refNomorAwal||s.nomorPelaporan||s.kode||null;
+        const ix = idS ? cur[k].findIndex(function(dd){
+          const idD = dd.refNomorAwal||dd.nomorPelaporan||dd.kode||null;
+          return idD && idD===idS;
+        }) : -1;
+        const before = cur[k].length;
+        if(ix>=0) cur[k][ix]=s; else cur[k].push(s);
+        if(cur[k].length>before) nCase++;
+      });
+    }
+  });
+  if(incoming.registration && typeof incoming.registration==='object'){
+    cur.registration = cur.registration || {};
+    ['UTD','RS'].forEach(function(f){
+      const inc = incoming.registration[f];
+      if(inc && typeof inc==='object'){
+        if(!cur.registration[f]){ cur.registration[f]=inc; nReg++; }
+        else if(inc.kode && cur.registration[f].kode===inc.kode){ cur.registration[f]=inc; }
+      }
+    });
+  }
+  if(!cur.loggedIn && incoming.loggedIn) cur.loggedIn = incoming.loggedIn;
+  lsSet(KEY, JSON.stringify(cur));
+  return {nCase: nCase, nReg: nReg};
+}
+function hvActiveTab(){
+  const b = document.querySelector('#tabBar button.active');
+  return b ? b.dataset.tab : 'utdAwal';
+}
+function hvImportFile(inp){
+  const f = inp.files && inp.files[0];
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = function(){
+    try{
+      const obj = JSON.parse(rd.result);
+      const r = hvMergeImport(obj);
+      renderData(hvActiveTab());
+      showToast(r.nCase+' entri kasus & '+r.nReg+' pendaftaran dipulihkan.');
+    }catch(e){ showToast('Berkas tidak valid: '+e.message, true); }
+  };
+  rd.readAsText(f);
+  inp.value = '';
+}
+function hvCopyFallback(txt, done){
+  const ta = document.createElement('textarea');
+  ta.value = txt; ta.setAttribute('readonly','');
+  ta.style.position='fixed'; ta.style.top='-1000px';
+  document.body.appendChild(ta); ta.select();
+  let ok=false; try{ ok=document.execCommand('copy'); }catch(e){}
+  ta.remove();
+  if(ok) done(); else showToast('Gagal menyalin otomatis. Pakai Unduh Backup.', true);
+}
+function hvCopyData(){
+  const txt = JSON.stringify(hvBackupObj());
+  const done = function(){ showToast('Teks backup tersalin. Simpan di Catatan.'); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(function(){ hvCopyFallback(txt, done); });
+  } else hvCopyFallback(txt, done);
+}
+function hvShowCopy(){
+  const box = document.getElementById('hvCopyBox');
+  const wrap = document.getElementById('hvCopyWrap');
+  box.value = JSON.stringify(hvBackupObj(), null, 1);
+  wrap.hidden = false;
+  box.focus();
+  try{ box.setSelectionRange(0, box.value.length); }catch(e){}
+}
+(function hvBindBackup(){
+
+  const dc = document.getElementById("dataContent");
+  if(dc && !dc.dataset.detBound){
+    dc.dataset.detBound = "1";
+    dc.addEventListener("click", function(ev){
+      const t = ev.target.closest(".det-toggle");
+      if(!t) return;
+      const full = dc.querySelector('.body.full[data-full="' + t.dataset.tgl + '"]');
+      if(full) full.hidden = !full.hidden;
+      t.textContent = full && full.hidden ? "\u25B8 Lihat detail lengkap" : "\u25BE Sembunyikan detail lengkap";
+    });
+  }
+  const be = document.getElementById('hvBtnExport');
+  const bi = document.getElementById('hvBtnImport');
+  const bc = document.getElementById('hvBtnCopy');
+  const bs = document.getElementById('hvBtnShow');
+  const fi = document.getElementById('hvImportFile');
+  if(be) be.addEventListener('click', hvExportFile);
+  if(bi) bi.addEventListener('click', function(){ fi.click(); });
+  if(bc) bc.addEventListener('click', hvCopyData);
+  if(bs) bs.addEventListener('click', hvShowCopy);
+  if(fi) fi.addEventListener('change', function(){ hvImportFile(fi); });
+})();
+
+/* ============ PWA SERVICE WORKER (added) ============ */
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  if(location.protocol!=='https:' && location.hostname!=='localhost' && location.hostname!=='127.0.0.1') return;
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+})();
 
 /* =========================================================
    INIT
